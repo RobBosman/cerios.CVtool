@@ -1,50 +1,66 @@
-# CVtool dev-env setup
-download & install [WampServer 2.x](http://www.wampserver.com/en/) in C:\Progs\Wamp\ \
-download & install Flash Builder 4.x\
-download & install Flash player (debug version)\
+# Cerios CVtool dev-env setup
+### prepare
+download & install [Wnmp 3.2](https://github.com/wnmp/wnmp) in C:\Progs\Wnmp\ \
+download & install Flash Builder 4.6 (plus crack)\
 download & install NetBeans for PHP\
-download & install MariaDB\
-download & install HeidiSQL\
-download & install FileZilla Client
+download & install [HeidiSQL](https://www.heidisql.com/) (portable version is OK)\
+GIT-checkout:
+* https://github.com/RobBosman/cerios.CVtoolServer-PHP into `${CVTOOL_ROOT}`
+* https://github.com/RobBosman/bransom.RestServer-PHP into `${BRANSOM_ROOT}`
+* https://github.com/RobBosman/cerios.CVtoolClient-Flex
+* https://github.com/RobBosman/bransom.RestClient-Flex
+### server
+edit the _HTTP Server_ section in file `C:\Progs\Wnmp\conf\nginx.conf`:
+* change `listen 80` into `listen 9080`
+* replace `|swf)` with `|woff|ttf)` to disable caching of SWF files
+* add this to the _HTTP Server_ section:
+```
+    ## @@@ Cerios.cvtool
+    location ~/bransom {
+        index bransom.php;
+        location ~/REST {
+            rewrite ^(.*)$ /bransom/REST/rest.php;
+        }
+    }
+    location ~/cvtool {
+        index CVtool.html;
+    }
+```
+edit `C:\Progs\Wnmp\php\php.ini` and replace `;extension=xsl` with `extension=xsl`\
+start Wnmp server (Nginx, MariaDB and PHP)
+### database
+MariaDB (port=3306, name='root', password='' or 'password'):
+```
+SET GLOBAL NET_READ_TIMEOUT=500;
+SET GLOBAL NET_WRITE_TIMEOUT=500;
+SET GLOBAL MAX_ALLOWED_PACKET=1073741824;
+DROP DATABASE IF EXISTS `deb31080_cv`;
+```
+extract `${CVTOOL_ROOT}\database\deb31080_cv-*.zip` (password='cvtoolcvtool')\
+use HeidiSQL to import `deb31080_cvtool-*.sql`
+### server-side IDE
+NetBeans: import _bransom.RestServer-PHP_ and _cerios.CVtoolServer-PHP_\
+edit Properties/Sources of project _bransom.RestServer-PHP_ to copy files from Sources Folder to `C:\Progs\Wnmp\html\bransom`\
+edit Properties/Sources of project _cerios.CVtoolServer-PHP_ to copy files from Sources Folder to `C:\Progs\Wnmp\html\cvtool`
+### client-side IDE
+FlashBuilder: import _FlexRestClient_ and _CVtoolClient_
+### run
+copy `C:\Progs\Wnmp\html\bransom\config\TEMPLATE-config.ini` to `config.ini`\
+edit `C:\Progs\Wnmp\html\bransom\config\config.ini`:
+```
+[db]
+hostName = localhost
+userName = root
+password = password
+schema-for-app.cvtool = deb31080_cvtool
 
-## server:
-GIT-checkout https://github.com/RobBosman/cerios.CVtoolServer-PHP into `${CVTOOL_ROOT}`\
-GIT-checkout https://github.com/RobBosman/bransom.RestServer-PHP into `${BRANSOM_ROOT}`\
-NetBeans: import "BransomRestServer", "CVtoolServer"\
-edit `C:\Progs\Wamp\bin\apache\Apache2.2.17\conf\httpd.conf`:
-* "Listen 80" => "Listen 9080"
-* "ServerName localhost:80" => "ServerName localhost:9080"
+[xml]
+namespaceUri-for-app.cv = http://ns.bransom.nl/cerios/cv/v20110401
 
-start WampServer
+[url]
+context-root-for-app.cv = cvtool
 
-## FLEX client:
-GIT-checkout https://github.com/RobBosman/cerios.CVtoolClient-Flex\
-GIT-checkout  https://github.com/RobBosman/bransom.RestClient-Flex\
-FlashBuilder: import "FlexRestClient", "CVtoolClient"
-
-* copy `${BRANSOM_ROOT}\IDE\BransomRestServer\REST\.htpassword` to `C:\Progs\Wamp\www\bransom\REST\`
-* copy `${BRANSOM_ROOT}\IDE\BransomRestServer\*.*` to `C:\Progs\Wamp\www\bransom\`
-* copy `${CVTOOL_ROOT}\IDE\CVtoolServer\*.*` to `C:\Progs\Wamp\www\cvtool\`
-
-copy `C:\Progs\Wamp\www\bransom\config\TEMPLATE-config.ini` to `config.ini`\
-edit `C:\Progs\Wamp\www\bransom\config\config.ini`:
-- hostName = localhost
-- userName = root
-- password = 
-- schema-for-app.cvtool = deb31080_cvtool
-
-WampServer: enable PHP extensions "php_curl", "php_xsl"\
-WampServer: enable Apache modules "headers_module", "rewrite_module"\
-open URL http://localhost:9080/bransom
-* edit httpd.conf: "Allow from 127.0.0.1" => "Allow from sop-bosmar-1.kadaster.local"
-* open http://sop-bosmar-1.kadaster.local:9080/bransom/index.php
-
-extract `${CVTOOL_ROOT}\database\deb31080_cvtool-*.zip`\
-MariaDB:
-* create empty schema "deb31080_cvtool" (or drop all existing tables)
-* SET GLOBAL NET_WRITE_TIMEOUT=500;
-* SET GLOBAL MAX_ALLOWED_PACKET=1073741824;
-* run deb31080_cvtool-*.sql
-
-open http://localhost:9080/cvtool\
-FileZilla: cerios.nl deb31080 /domains/ita.cerios.nl/private_html/
+[auth]
+authentication-model-for-app.cv = OpenIDConnect
+```
+open http://localhost:9080/cvtool
