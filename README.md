@@ -1,7 +1,7 @@
 # Cerios CVtool dev-env setup
 ### prepare
 download & install [Wnmp 3.2](https://github.com/wnmp/wnmp) in C:\Progs\Wnmp\ \
-download & install Flash Builder 4.6 (plus crack)\
+download & install Flash Builder 4.6\
 download & install NetBeans for PHP\
 download & install [HeidiSQL](https://www.heidisql.com/) (portable version is OK)\
 GIT-checkout:
